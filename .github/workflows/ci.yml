@@ -11,29 +11,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Baixar código
+      # 1. Checkout do repositório
       - name: 📥 Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Configurar Node.js
+      # 2. Setup Node.js (🔥 corrigido para v20)
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 20
           cache: npm
 
       # 3. Instalar dependências
       - name: 📦 Install dependencies
         run: npm install
 
-      # 4. Rodar lint (se configurado)
+      # 4. Lint (se configurado)
       - name: 🔍 Run ESLint
         run: npm run lint --if-present
 
-      # 5. Rodar build (typescript)
-      - name: 🏗️ Build TypeScript
+      # 5. Build TypeScript
+      - name: 🏗️ Build project
         run: npm run build
 
-      # 6. Rodar testes (Jest + Mongo Memory Server)
+      # 6. Rodar testes
       - name: 🧪 Run tests
         run: npm run test
