@@ -1,0 +1,39 @@
+name: CI - Backend
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Baixar código
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Configurar Node.js
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: npm
+
+      # 3. Instalar dependências
+      - name: 📦 Install dependencies
+        run: npm install
+
+      # 4. Rodar lint (se configurado)
+      - name: 🔍 Run ESLint
+        run: npm run lint --if-present
+
+      # 5. Rodar build (typescript)
+      - name: 🏗️ Build TypeScript
+        run: npm run build
+
+      # 6. Rodar testes (Jest + Mongo Memory Server)
+      - name: 🧪 Run tests
+        run: npm run test
