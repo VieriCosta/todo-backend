@@ -2,38 +2,42 @@ name: CI - Backend
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+
+    services:
+      mongo:
+        image: mongo:5.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd="mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
-      # 1. Checkout do repositório
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      # 2. Setup Node.js (🔥 corrigido para v20)
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: '20'
+          cache: 'npm'
 
-      # 3. Instalar dependências
-      - name: 📦 Install dependencies
-        run: npm install
+      - name: Install
+        run: npm ci
 
-      # 4. Lint (se configurado)
-      - name: 🔍 Run ESLint
-        run: npm run lint --if-present
-
-      # 5. Build TypeScript
-      - name: 🏗️ Build project
+      - name: Build
         run: npm run build
 
-      # 6. Rodar testes
-      - name: 🧪 Run tests
-        run: npm run test
+      - name: Test
+        run: npm test --if-present
