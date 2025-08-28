@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
-import Todo from "../models/todo";
-import { todoSchema } from "../validators/todoValidator";
+import Todo from "../models/Todo";
 
 // Listar todos (com filtros opcionais)
 export const getTodos = async (req: Request, res: Response, next: any) => {
@@ -22,27 +21,63 @@ export const getTodos = async (req: Request, res: Response, next: any) => {
 };
 
 // Criar uma nova tarefa
-export const createTodo = async (req: Request, res: Response, next: any) => {
+export const createTodo = async (req, res) => {
   try {
-    const data = todoSchema.parse(req.body);
-    const newTodo = new Todo(data);
-    await newTodo.save();
-    res.status(201).json(newTodo);
-  } catch (error) {
-    next(error);
+    const { title, description, color } = req.body;
+
+    // aceita favorite ou isFavorite e normaliza
+    const fav =
+      typeof req.body.favorite === "boolean"
+        ? req.body.favorite
+        : typeof req.body.isFavorite === "boolean"
+        ? req.body.isFavorite
+        : false;
+
+    const todo = await Todo.create({
+      title,
+      description,
+      color,
+      isFavorite: fav, // sempre salva como isFavorite
+    });
+
+    return res.status(201).json(todo);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao criar tarefa" });
   }
 };
 
-// Atualizar uma tarefa
-export const updateTodo = async (req: Request, res: Response, next: any) => {
+export const updateTodo = async (req, res) => {
   try {
-    const { id } = req.params;
-    const data = todoSchema.partial().parse(req.body); // valida apenas os campos enviados
-    const todo = await Todo.findByIdAndUpdate(id, data, { new: true });
-    if (!todo) return res.status(404).json({ error: "Tarefa não encontrada" });
-    res.json(todo);
-  } catch (error) {
-    next(error);
+    const { title, description, color } = req.body;
+
+    // Normaliza favorite/isFavorite -> isFavorite
+    const hasFavorite =
+      typeof req.body.favorite === "boolean" ||
+      typeof req.body.isFavorite === "boolean";
+
+    const fav =
+      typeof req.body.favorite === "boolean"
+        ? req.body.favorite
+        : req.body.isFavorite;
+
+    const updates: any = {
+      ...(title !== undefined ? { title } : {}),
+      ...(description !== undefined ? { description } : {}),
+      ...(color !== undefined ? { color } : {}),
+      ...(hasFavorite ? { isFavorite: fav } : {}),
+    };
+
+    const todo = await Todo.findByIdAndUpdate(req.params.id, updates, {
+      new: true,
+    });
+
+    if (!todo) return res.status(404).json({ message: "Tarefa não encontrada" });
+
+    return res.json(todo);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Erro ao atualizar tarefa" });
   }
 };
 

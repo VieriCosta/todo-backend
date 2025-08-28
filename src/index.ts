@@ -6,22 +6,41 @@ import todoRoutes from "./routes/todoRoutes";
 import connectDB from "./db";
 import errorHandler from "./middleware/errorHandler";
 import { setupSwagger } from "./swagger";
+import { seedTodos } from "./seed";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// Middlewares
 app.use(cors());
 app.use(express.json());
+
+// Rotas
 app.use("/api/todos", todoRoutes);
+
+// Swagger docs
 setupSwagger(app);
+
+// Middleware global de erros
 app.use(errorHandler);
 
-// Só conecta e sobe o servidor se não for teste
+// Inicialização
 if (process.env.NODE_ENV !== "test") {
-  connectDB().then(() => {
-    app.listen(PORT, () => console.log(`🚀 Server rodando na porta ${PORT}`));
+  connectDB().then(async () => {
+    if (process.env.NODE_ENV !== "production") {
+      try {
+        await seedTodos();
+        console.log("✅ Seed executada com sucesso.");
+      } catch (err) {
+        console.error("❌ Erro ao rodar seed:", err);
+      }
+    }
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server rodando na porta ${PORT}`);
+    });
   });
 }
 

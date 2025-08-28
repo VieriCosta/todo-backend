@@ -1,7 +1,7 @@
 import request from "supertest";
 import app from "../src/index";
 import mongoose from "mongoose";
-import Todo from "../src/models/todo";
+import Todo from "../src/models/Todo";
 import { MongoMemoryServer } from "mongodb-memory-server";
 
 let mongoServer: MongoMemoryServer;

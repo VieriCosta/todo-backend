@@ -4,16 +4,17 @@ export interface ITodo extends Document {
   title: string;
   description?: string;
   color?: string;
-  favorite: boolean;
-  createdAt: Date;
+  isFavorite: boolean;
 }
 
-const TodoSchema: Schema = new Schema({
-  title: { type: String, required: true },
-  description: { type: String },
-  color: { type: String, default: "#ffffff" },
-  favorite: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now }
-});
+const TodoSchema = new Schema<ITodo>(
+  {
+    title: { type: String, required: true },
+    description: { type: String, default: "" },
+    color: { type: String, default: "#f9f9f9" },
+    isFavorite: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
 
 export default mongoose.model<ITodo>("Todo", TodoSchema);
