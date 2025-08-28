@@ -1,86 +1,76 @@
-import { Request, Response } from "express";
-import Todo from "../models/todo";
+import { Request, Response, NextFunction } from "express";
+import Todo, { ITodo } from "../models/todo";
 
-export const getTodos = async (req: Request, res: Response, next: any) => {
+/** GET /todos (com filtros opcionais) */
+export const getTodos = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { favorite, color } = req.query;
 
-    const filter: any = {};
-    if (favorite !== undefined) filter.favorite = favorite === "true";
+    const filter: Record<string, any> = {};
+    if (favorite !== undefined) {
+      // aceita "true"/"false" como string
+      filter.isFavorite = String(favorite).toLowerCase() === "true";
+    }
     if (color) filter.color = color;
 
-    const todos = await Todo.find(filter).sort({ favorite: -1, createdAt: -1 });
-
-    res.json(todos);
-  } catch (error) {
-    next(error);
-  }
-};
-export const createTodo = async (req: Request, res: Response, next: any) => {
-  try {
-    const { title, description, color } = req.body;
-    const fav =
-      typeof req.body.favorite === "boolean"
-        ? req.body.favorite
-        : typeof req.body.isFavorite === "boolean"
-        ? req.body.isFavorite
-        : false;
-
-    const todo = await Todo.create({
-      title,
-      description,
-      color,
-      isFavorite: fav,
-    });
-
-    return res.status(201).json(todo);
+    const list = await Todo.find(filter).lean({ virtuals: true });
+    return res.json(list);
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Erro ao criar tarefa" });
+    return next(err);
   }
 };
 
-export const updateTodo = async (req: Request, res: Response, next: any) => {
+/** POST /todos */
+export const createTodo = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { title, description, color } = req.body;
+    const payload: Partial<ITodo> & Record<string, any> = { ...req.body };
 
-    
-    const hasFavorite =
-      typeof req.body.favorite === "boolean" ||
-      typeof req.body.isFavorite === "boolean";
+    // converte favorite -> isFavorite (create aceita alias, mas deixamos explícito)
+    if (typeof payload.favorite === "boolean" && payload.isFavorite === undefined) {
+      payload.isFavorite = payload.favorite;
+      delete payload.favorite;
+    }
 
-    const fav =
-      typeof req.body.favorite === "boolean"
-        ? req.body.favorite
-        : req.body.isFavorite;
-
-    const updates: any = {
-      ...(title !== undefined ? { title } : {}),
-      ...(description !== undefined ? { description } : {}),
-      ...(color !== undefined ? { color } : {}),
-      ...(hasFavorite ? { isFavorite: fav } : {}),
-    };
-
-    const todo = await Todo.findByIdAndUpdate(req.params.id, updates, {
-      new: true,
-    });
-
-    if (!todo) return res.status(404).json({ message: "Tarefa não encontrada" });
-
-    return res.json(todo);
+    const created = await Todo.create(payload);
+    return res.status(201).json(created.toJSON()); // garante favorite no retorno
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Erro ao atualizar tarefa" });
+    return next(err);
   }
 };
 
-export const deleteTodo = async (req: Request, res: Response, next: any) => {
+/** PUT /todos/:id */
+export const updateTodo = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const todo = await Todo.findByIdAndDelete(id);
-    if (!todo) return res.status(404).json({ error: "Tarefa não encontrada" });
-    res.status(204).send();
-  } catch (error) {
-    next(error);
+    const updates: Partial<ITodo> & Record<string, any> = { ...req.body };
+
+    // IMPORTANTE: update não entende alias; mapeamos manualmente
+    if (typeof updates.favorite === "boolean" && updates.isFavorite === undefined) {
+      updates.isFavorite = updates.favorite;
+      delete updates.favorite;
+    }
+
+    const updated = await Todo.findByIdAndUpdate(id, updates, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updated) return res.status(404).json({ message: "Todo not found" });
+
+    return res.json(updated.toJSON()); // inclui virtual favorite
+  } catch (err) {
+    return next(err);
+  }
+};
+
+/** DELETE /todos/:id */
+export const deleteTodo = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const removed = await Todo.findByIdAndDelete(id);
+    if (!removed) return res.status(404).json({ message: "Todo not found" });
+    return res.status(204).send();
+  } catch (err) {
+    return next(err);
   }
 };
