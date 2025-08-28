@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Todo from "../models/Todo";
 
+
 // Listar todos (com filtros opcionais)
 export const getTodos = async (req: Request, res: Response, next: any) => {
   try {
@@ -21,7 +22,7 @@ export const getTodos = async (req: Request, res: Response, next: any) => {
 };
 
 // Criar uma nova tarefa
-export const createTodo = async (req, res) => {
+export const createTodo = async (req: Request, res: Response, next: any) => {
   try {
     const { title, description, color } = req.body;
 
@@ -47,7 +48,7 @@ export const createTodo = async (req, res) => {
   }
 };
 
-export const updateTodo = async (req, res) => {
+export const updateTodo = async (req: Request, res: Response, next: any) => {
   try {
     const { title, description, color } = req.body;
 
