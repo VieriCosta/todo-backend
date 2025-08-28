@@ -1,18 +1,14 @@
 import { Request, Response } from "express";
-import Todo from "../models/Todo";
+import Todo from "../models/todo";
 
-
-// Listar todos (com filtros opcionais)
 export const getTodos = async (req: Request, res: Response, next: any) => {
   try {
     const { favorite, color } = req.query;
 
-    // Construir filtro dinâmico
     const filter: any = {};
     if (favorite !== undefined) filter.favorite = favorite === "true";
     if (color) filter.color = color;
 
-    // Buscar no Mongo com filtros + ordenar favoritos no topo
     const todos = await Todo.find(filter).sort({ favorite: -1, createdAt: -1 });
 
     res.json(todos);
@@ -20,13 +16,9 @@ export const getTodos = async (req: Request, res: Response, next: any) => {
     next(error);
   }
 };
-
-// Criar uma nova tarefa
 export const createTodo = async (req: Request, res: Response, next: any) => {
   try {
     const { title, description, color } = req.body;
-
-    // aceita favorite ou isFavorite e normaliza
     const fav =
       typeof req.body.favorite === "boolean"
         ? req.body.favorite
@@ -38,7 +30,7 @@ export const createTodo = async (req: Request, res: Response, next: any) => {
       title,
       description,
       color,
-      isFavorite: fav, // sempre salva como isFavorite
+      isFavorite: fav,
     });
 
     return res.status(201).json(todo);
@@ -52,7 +44,7 @@ export const updateTodo = async (req: Request, res: Response, next: any) => {
   try {
     const { title, description, color } = req.body;
 
-    // Normaliza favorite/isFavorite -> isFavorite
+    
     const hasFavorite =
       typeof req.body.favorite === "boolean" ||
       typeof req.body.isFavorite === "boolean";
@@ -82,7 +74,6 @@ export const updateTodo = async (req: Request, res: Response, next: any) => {
   }
 };
 
-// Deletar uma tarefa
 export const deleteTodo = async (req: Request, res: Response, next: any) => {
   try {
     const { id } = req.params;

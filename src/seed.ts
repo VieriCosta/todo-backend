@@ -1,4 +1,4 @@
-import Todo from "./models/Todo";
+import Todo from "./models/todo";
 
 export const seedTodos = async () => {
   const count = await Todo.countDocuments();

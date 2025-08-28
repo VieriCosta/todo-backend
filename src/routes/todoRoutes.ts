@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   getTodos,
   createTodo,
-  updateTodo,   // deve aceitar atualização parcial
+  updateTodo,
   deleteTodo,
 } from "../controllers/todoController";
 
